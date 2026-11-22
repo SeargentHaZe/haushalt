@@ -1,73 +1,97 @@
 <!DOCTYPE html>
 <html lang="de"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0f0a24">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
 <title>Mira</title>
 <style>
-:root{--bg:#e9eff2;--card:#fff;--text:#13232b;--muted:#5d6f78;--acc:#1d5f8c;--on:#fff;--line:#d3dde2;--me:#dbe9f2;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
-@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#10181c;--card:#1b262c;--text:#e6eef2;--muted:#93a6af;--acc:#6db3e0;--on:#0b1a22;--line:#2d3b42;--me:#24404f}}
-:root[data-theme="dark"]{--bg:#10181c;--card:#1b262c;--text:#e6eef2;--muted:#93a6af;--acc:#6db3e0;--on:#0b1a22;--line:#2d3b42;--me:#24404f}
+:root{--card:rgba(255,255,255,.07);--line:rgba(255,255,255,.14);--text:#f4f0ff;--muted:#b0a8cf;--pur:#8b5cf6;--tur:#2dd4bf;--grad:linear-gradient(135deg,#7c3aed,#14b8a6);color-scheme:dark}
 *{box-sizing:border-box}
-html,body{height:100%;margin:0}
-body{background:var(--bg);color:var(--text);font:20px/1.4 system-ui,"Segoe UI",Roboto,sans-serif}
-.app{height:100%;display:grid;grid-template-columns:1fr 1fr;gap:16px;padding:16px}
-.side{display:flex;flex-direction:column;gap:16px;overflow:auto;min-height:0}
-.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px}
-h2{margin:0 0 10px;font-size:22px}
-.muted{color:var(--muted);margin:4px 0}
-.row{display:flex;align-items:center;gap:12px;padding:10px 0;border-top:1px solid var(--line)}
+html{font-size:clamp(15px,1.5vw,24px)}
+html,body{height:100%;margin:0;overflow:hidden}
+body{color:var(--text);font:1rem/1.4 system-ui,"Segoe UI",Roboto,sans-serif;background:radial-gradient(60% 70% at 8% 0%,rgba(124,58,237,.55),transparent 60%),radial-gradient(55% 65% at 100% 100%,rgba(20,184,166,.40),transparent 60%),#0f0a24}
+.app{height:100%;display:grid;grid-template-rows:auto 1fr;gap:.9rem;padding:.9rem 1.2rem}
+header{display:flex;align-items:center;justify-content:space-between;gap:1rem}
+.brand{display:flex;align-items:center;gap:.7rem}
+h1{margin:0;font-size:2.2rem;background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent;letter-spacing:.02em}
+.clockbox{text-align:center;line-height:1.1}
+#clock{font-size:2.4rem;font-weight:700}
+#date{color:var(--muted)}
+.ctl{display:flex;align-items:center;gap:.7rem;max-width:42vw;justify-content:flex-end;flex-wrap:wrap}
+#state{color:var(--muted);font-size:.85rem;text-align:right}
+main{display:grid;grid-template-columns:1fr 1fr 1.3fr;gap:1rem;min-height:0}
+.card{background:var(--card);border:1px solid var(--line);border-radius:1.2rem;padding:1rem 1.1rem;display:flex;flex-direction:column;min-height:0}
+h2{margin:0 0 .6rem;font-size:1.3rem}
+.scroll{flex:1;overflow:auto;min-height:0}
+.row{display:flex;align-items:center;gap:.8rem;padding:.55rem 0;border-top:1px solid var(--line);font-size:1.25rem}
 .row:first-of-type{border-top:0}
-.row input{width:26px;height:26px}
+.row input{width:1.5rem;height:1.5rem;accent-color:var(--tur)}
 .done span{text-decoration:line-through;color:var(--muted)}
-button{font:inherit;border:0;border-radius:10px;padding:12px 18px;background:var(--acc);color:var(--on);cursor:pointer}
-button.x{background:transparent;color:var(--muted);padding:6px 12px;font-size:26px}
-button.alt{background:transparent;color:var(--acc);border:1px solid var(--acc)}
-.bar{display:flex;gap:10px;margin-top:12px;flex-wrap:wrap}
-.chat{display:flex;flex-direction:column;min-height:0}
-#log{flex:1;overflow:auto;display:flex;flex-direction:column;gap:10px;padding-bottom:8px}
-.b{max-width:85%;padding:10px 14px;border-radius:14px;background:var(--bg);white-space:pre-wrap}
-.b.me{align-self:flex-end;background:var(--me)}
-.b a{color:var(--acc)}
-.in{display:flex;gap:10px;margin-top:8px}
-#q{flex:1;font:inherit;padding:14px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--text)}
-:focus-visible{outline:3px solid var(--acc);outline-offset:2px}
-.head{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:8px}
-.head h2{margin:0}.head button{margin-left:auto}
-.dot{width:14px;height:14px;border-radius:50%;background:var(--muted)}
-.dot.on{background:#d93a3a}
-summary{cursor:pointer;font-size:22px;font-weight:600}
-details h3{margin:14px 0 4px;font-size:19px}
-details ul{margin:4px 0 8px;padding-left:22px}
-details li{margin:3px 0}
-@media(max-width:800px){.app{grid-template-columns:1fr;height:auto}.chat{height:70vh}}
+button{font:inherit;border:0;border-radius:.8rem;padding:.65rem 1.1rem;background:var(--grad);color:#fff;font-weight:600;cursor:pointer}
+button.ghost,button.alt{background:transparent;border:1px solid var(--line);color:var(--text)}
+button.x{background:transparent;border:0;color:var(--muted);font-size:1.6rem;padding:.1rem .6rem;font-weight:400}
+.bar{display:flex;gap:.6rem;margin-top:.7rem;flex-wrap:wrap}
+.muted{color:var(--muted);margin:.3rem 0}
+#log{flex:1;overflow:auto;display:flex;flex-direction:column;gap:.6rem;padding:.2rem 0 .5rem;min-height:0}
+.b{max-width:88%;padding:.65rem .9rem;border-radius:1rem;background:rgba(139,92,246,.22);border:1px solid rgba(139,92,246,.35);white-space:pre-wrap;font-size:1.05rem}
+.b.me{align-self:flex-end;background:rgba(45,212,191,.18);border-color:rgba(45,212,191,.4)}
+.b a{color:var(--tur)}
+.in{display:flex;gap:.6rem;margin-top:.4rem}
+#q{flex:1;font:inherit;font-size:1.1rem;padding:.8rem 1rem;border-radius:.9rem;border:1px solid var(--line);background:rgba(0,0,0,.25);color:var(--text)}
+#heard{min-height:1.4em;font-size:.9rem}
+.dot{width:1.1rem;height:1.1rem;border-radius:50%;background:#6b5fa3}
+.dot.on{background:var(--tur);animation:p 1.8s infinite}
+@keyframes p{0%{box-shadow:0 0 0 0 rgba(45,212,191,.6)}70%{box-shadow:0 0 0 .9rem rgba(45,212,191,0)}100%{box-shadow:0 0 0 0 rgba(45,212,191,0)}}
+@media(prefers-reduced-motion:reduce){.dot.on{animation:none}}
+:focus-visible{outline:3px solid var(--tur);outline-offset:2px}
+#menu{position:fixed;top:0;right:0;bottom:0;width:min(30rem,90vw);background:#17103a;border-left:1px solid var(--line);padding:1rem 1.2rem;overflow:auto;transform:translateX(105%);transition:transform .25s;z-index:5}
+#menu.open{transform:none}
+.mh{display:flex;justify-content:space-between;align-items:center}
+#menu h3{margin:1.1rem 0 .3rem;font-size:1.05rem;color:var(--tur)}
+#menu ul{margin:.2rem 0 .4rem;padding-left:1.2rem}
+#menu li{margin:.25rem 0;font-size:.95rem}
+.opt{display:flex;gap:.7rem;align-items:flex-start;margin:.6rem 0;font-size:.98rem}
+.opt input{width:1.3rem;height:1.3rem;accent-color:var(--tur);margin-top:.15rem}
+#rotate{display:none;position:fixed;inset:0;z-index:9;background:#0f0a24;color:#fff;align-items:center;justify-content:center;font-size:1.6rem;text-align:center;padding:2rem}
+@media(orientation:portrait){#rotate{display:flex}}
 </style></head>
 <body>
 <div class="app">
- <div class="side">
-  <div class="card"><h2>Einkaufsliste</h2><div id="list"></div>
-   <div class="bar"><button id="send">Ans Handy senden</button><button class="alt" id="clean">Erledigte entfernen</button></div></div>
-  <div class="card"><h2>Termine</h2><div id="ev"></div></div>
-  <details class="card" id="help"><summary>Sprachbefehle</summary>
-   <p class="muted">Erst „Hey Mira“ sagen, dann den Befehl. Oder „Hey Mira“, auf den Piepton warten und dann den Befehl sprechen.</p>
-   <h3>Einkaufsliste</h3>
-   <ul><li>„Setze Milch und Brot auf die Einkaufsliste“</li><li>„Ich brauche noch Eier“ oder „Wir müssen Butter besorgen“</li><li>„Streiche Milch von der Liste“</li><li>„Hake Brot ab“ oder „Ich habe Brot gekauft“</li><li>„Was steht auf der Liste“</li><li>„Sende die Liste ans Handy“</li><li>„Leere die Liste“</li></ul>
-   <h3>Termine</h3>
-   <ul><li>„Termin morgen um zehn Uhr Zahnarzt“</li><li>„Erinnere mich am dritten Dezember um halb vier an den Friseur“</li><li>„Welche Termine habe ich“ oder „Was habe ich morgen“</li><li>„Lösche Termin Zahnarzt“</li></ul>
-   <p class="muted">Uhrzeiten von 1 bis 5 Uhr nehme ich als nachmittags. Sag „morgens“, wenn du die Nacht oder den frühen Morgen meinst.</p>
-   <h3>Rezepte und Wissen</h3>
-   <ul><li>„Rezept Kürbissuppe“ oder „Wie koche ich Gulasch“</li><li>„Was ist Quinoa“, „Wer war Goethe“, „Suche Hildesheim“</li></ul>
-   <h3>Sonstiges</h3>
-   <ul><li>„Hilfe“ zeigt eine Kurzfassung im Chat</li><li>Kaufen und Bestellen kann Mira nicht, und das bleibt so</li></ul>
-  </details>
- </div>
- <div class="card chat">
-  <div class="head"><h2>Mira</h2><span class="dot" id="dot"></span><span class="muted" id="state">Mikrofon aus</span><button id="mic">Mikrofon einschalten</button></div>
-  <div id="log"></div>
-  <p class="muted" id="heard"></p>
-  <label class="muted"><input type="checkbox" id="showheard" checked> Erkanntes kurz anzeigen (nur zum Testen, wird nicht gespeichert)</label>
-  <div class="in"><input id="q" type="text" autocomplete="off" autocapitalize="off" placeholder="Schreiben oder per Mikrofon der Celia-Tastatur sprechen"><button id="go">Senden</button></div>
-  <label class="muted"><input type="checkbox" id="auto" checked> Nach einer Sprechpause automatisch senden. Oder am Ende „senden“ sagen.</label>
- </div>
+ <header>
+  <div class="brand"><span class="dot" id="dot"></span><h1>Mira</h1></div>
+  <div class="clockbox"><div id="clock">--:--</div><div id="date"></div></div>
+  <div class="ctl"><span id="state">Mikrofon aus</span><button id="mic">Mikrofon einschalten</button><button class="ghost" id="menubtn" aria-label="Menü">☰</button></div>
+ </header>
+ <main>
+  <section class="card"><h2>🛒 Einkaufsliste</h2><div id="list" class="scroll"></div>
+   <div class="bar"><button id="send">Ans Handy senden</button><button class="alt" id="clean">Erledigte entfernen</button></div></section>
+  <section class="card"><h2>📅 Termine</h2><div id="ev" class="scroll"></div></section>
+  <section class="card"><h2>💬 Mira</h2><div id="log"></div><p class="muted" id="heard"></p>
+   <div class="in"><input id="q" type="text" autocomplete="off" autocapitalize="off" placeholder="Hey Mira … oder hier tippen"><button id="go">Senden</button></div></section>
+ </main>
 </div>
+<aside id="menu">
+ <div class="mh"><h2>Menü</h2><button class="ghost" id="menuclose" aria-label="Schließen">✕</button></div>
+ <h3>Anzeige</h3>
+ <button class="ghost" id="fs">Vollbild (ohne Adressleiste)</button>
+ <h3>Optionen</h3>
+ <label class="opt"><input type="checkbox" id="showheard" checked> Erkanntes kurz anzeigen (nur zum Testen, wird nicht gespeichert)</label>
+ <label class="opt"><input type="checkbox" id="auto" checked> Beim Tippen oder Diktieren nach einer Pause automatisch senden. Oder am Ende „senden“ sagen.</label>
+ <h3>Sprachbefehle</h3>
+ <p class="muted">Erst „Hey Mira“ sagen, dann den Befehl. Oder „Hey Mira“, auf den Piepton warten und dann sprechen.</p>
+ <h3>Einkaufsliste</h3>
+ <ul><li>„Setze Milch und Brot auf die Einkaufsliste“</li><li>„Ich brauche noch Eier“ oder „Wir müssen Butter besorgen“</li><li>„Streiche Milch von der Liste“</li><li>„Hake Brot ab“ oder „Ich habe Brot gekauft“</li><li>„Was steht auf der Liste“</li><li>„Sende die Liste ans Handy“</li><li>„Leere die Liste“</li></ul>
+ <h3>Termine</h3>
+ <ul><li>„Termin morgen um zehn Uhr Zahnarzt“</li><li>„Erinnere mich am dritten Dezember um halb vier an den Friseur“</li><li>„Welche Termine habe ich“ oder „Was habe ich morgen“</li><li>„Lösche Termin Zahnarzt“</li></ul>
+ <p class="muted">Uhrzeiten von 1 bis 5 Uhr nehme ich als nachmittags. Sag „morgens“, wenn du die Nacht oder den frühen Morgen meinst.</p>
+ <h3>Rezepte und Wissen</h3>
+ <ul><li>„Rezept Kürbissuppe“ oder „Wie koche ich Gulasch“</li><li>„Was ist Quinoa“, „Wer war Goethe“, „Suche Hildesheim“</li></ul>
+ <h3>Sonstiges</h3>
+ <ul><li>„Hilfe“ zeigt eine Kurzfassung im Chat</li><li>Kaufen und Bestellen kann Mira nicht, und das bleibt so</li></ul>
+ <p class="muted">Alle Daten bleiben auf diesem Tablet.</p>
+</aside>
+<div id="rotate">Bitte das Tablet quer halten</div>
 <script>
 const $=s=>document.querySelector(s);
 const load=(k,d)=>{try{return JSON.parse(localStorage.getItem(k))||d}catch(e){return d}};
@@ -234,4 +258,20 @@ say("Hallo, ich bin Mira. Ich führe deine Einkaufsliste und deine Termine und s
 <script src="vosk.js"></script>
 <script src="nlu.js"></script>
 <script src="wake.js"></script>
+<script>
+(()=>{
+ const $=s=>document.querySelector(s);
+ const menu=$("#menu");
+ $("#menubtn").onclick=()=>menu.classList.toggle("open");
+ $("#menuclose").onclick=()=>menu.classList.remove("open");
+ const full=async()=>{try{await document.documentElement.requestFullscreen();try{await screen.orientation.lock("landscape")}catch(e){}}catch(e){}};
+ $("#fs").onclick=()=>{full();menu.classList.remove("open")};
+ $("#mic").addEventListener("click",()=>{if(!document.fullscreenElement&&!matchMedia("(display-mode: fullscreen), (display-mode: standalone)").matches)full()});
+ const tick=()=>{const d=new Date();$("#clock").textContent=d.toLocaleTimeString("de-DE",{hour:"2-digit",minute:"2-digit"});$("#date").textContent=d.toLocaleDateString("de-DE",{weekday:"long",day:"numeric",month:"long"})};
+ tick();setInterval(tick,20000);
+ for(const id of ["auto","showheard"]){const c=$("#"+id);
+  try{const v=localStorage.getItem("mira."+id);if(v!==null)c.checked=v==="1"}catch(e){}
+  c.addEventListener("change",()=>{try{localStorage.setItem("mira."+id,c.checked?"1":"0")}catch(e){}})}
+})();
+</script>
 </body></html>
