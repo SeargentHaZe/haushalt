@@ -73,7 +73,7 @@
         const tick = setInterval(() => setState("Sprachmodell wird entpackt und geladen … " + Math.round((Date.now() - t0) / 1000) + " s (kann einige Minuten dauern)"), 1000);
         try {
           model = await Promise.race([
-            Vosk.createModel("model.tar.gz"),
+            Vosk.createModel(new URL("model.tar.gz", location.href).href),
             new Promise((_, rej) => setTimeout(() => rej(new Error("Zeitüberschreitung nach 3 Minuten beim Laden des Sprachmodells")), 180000))
           ]);
         } finally { clearInterval(tick); }
