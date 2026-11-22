@@ -34,6 +34,10 @@ button.alt{background:transparent;color:var(--acc);border:1px solid var(--acc)}
 .head h2{margin:0}.head button{margin-left:auto}
 .dot{width:14px;height:14px;border-radius:50%;background:var(--muted)}
 .dot.on{background:#d93a3a}
+summary{cursor:pointer;font-size:22px;font-weight:600}
+details h3{margin:14px 0 4px;font-size:19px}
+details ul{margin:4px 0 8px;padding-left:22px}
+details li{margin:3px 0}
 @media(max-width:800px){.app{grid-template-columns:1fr;height:auto}.chat{height:70vh}}
 </style></head>
 <body>
@@ -42,6 +46,18 @@ button.alt{background:transparent;color:var(--acc);border:1px solid var(--acc)}
   <div class="card"><h2>Einkaufsliste</h2><div id="list"></div>
    <div class="bar"><button id="send">Ans Handy senden</button><button class="alt" id="clean">Erledigte entfernen</button></div></div>
   <div class="card"><h2>Termine</h2><div id="ev"></div></div>
+  <details class="card" id="help"><summary>Sprachbefehle</summary>
+   <p class="muted">Erst „Hey Mira“ sagen, dann den Befehl. Oder „Hey Mira“, auf den Piepton warten und dann den Befehl sprechen.</p>
+   <h3>Einkaufsliste</h3>
+   <ul><li>„Setze Milch und Brot auf die Einkaufsliste“</li><li>„Ich brauche noch Eier“ oder „Wir müssen Butter besorgen“</li><li>„Streiche Milch von der Liste“</li><li>„Hake Brot ab“ oder „Ich habe Brot gekauft“</li><li>„Was steht auf der Liste“</li><li>„Sende die Liste ans Handy“</li><li>„Leere die Liste“</li></ul>
+   <h3>Termine</h3>
+   <ul><li>„Termin morgen um zehn Uhr Zahnarzt“</li><li>„Erinnere mich am dritten Dezember um halb vier an den Friseur“</li><li>„Welche Termine habe ich“ oder „Was habe ich morgen“</li><li>„Lösche Termin Zahnarzt“</li></ul>
+   <p class="muted">Uhrzeiten von 1 bis 5 Uhr nehme ich als nachmittags. Sag „morgens“, wenn du die Nacht oder den frühen Morgen meinst.</p>
+   <h3>Rezepte und Wissen</h3>
+   <ul><li>„Rezept Kürbissuppe“ oder „Wie koche ich Gulasch“</li><li>„Was ist Quinoa“, „Wer war Goethe“, „Suche Hildesheim“</li></ul>
+   <h3>Sonstiges</h3>
+   <ul><li>„Hilfe“ zeigt eine Kurzfassung im Chat</li><li>Kaufen und Bestellen kann Mira nicht, und das bleibt so</li></ul>
+  </details>
  </div>
  <div class="card chat">
   <div class="head"><h2>Mira</h2><span class="dot" id="dot"></span><span class="muted" id="state">Mikrofon aus</span><button id="mic">Mikrofon einschalten</button></div>
@@ -216,5 +232,6 @@ render();
 say("Hallo, ich bin Mira. Ich führe deine Einkaufsliste und deine Termine und suche für dich im Internet. Bestellen oder Kaufen mache ich nicht.\nSag zum Beispiel: Milch und Brot auf die Einkaufsliste.");
 </script>
 <script src="vosk.js"></script>
+<script src="nlu.js"></script>
 <script src="wake.js"></script>
 </body></html>

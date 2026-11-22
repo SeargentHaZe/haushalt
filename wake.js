@@ -4,7 +4,7 @@
   const btn = $("#mic"), stateEl = $("#state"), heard = $("#heard"), show = $("#showheard"), dot = $("#dot");
   const IDLE = "Mikrofon an, warte auf „Hey Mira“";
   // Das kleine deutsche Modell kennt „Mira“ evtl. nicht und hört dann ähnliche Wörter. Varianten hier ergänzen.
-  const WAKE = /(?:^|\s)(?:(?:hey|hei|hej|hallo|hi|okay|ok)\s+(?:mir\s?a|mir|mia|maria|mehr\s?a|mirra)|mira|myra|miera|meera|mirra)(?=\s|$)/;
+  const WAKE = /(?:^|\s)(?:(?:hey|hei|hej|hallo|hi|okay|ok|he)\s+m[a-zäöüß]{1,5}(?:\s+a)?|mira|myra|miera|meera|mirra)(?=\s|$)/;
   let model = null, rec = null, ctx = null, stream = null, node = null, src = null, lock = null;
   let on = false, armed = 0, hideT;
 
