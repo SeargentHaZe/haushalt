@@ -43,15 +43,34 @@
     }
   }
 
+  async function checkModelFile() {
+    const r = await fetch("model.tar.gz");
+    if (!r.ok) throw new Error("model.tar.gz nicht gefunden (Status " + r.status + ")");
+    const enc = r.headers.get("content-encoding");
+    const total = +r.headers.get("content-length") || 0;
+    const reader = r.body.getReader();
+    let got = 0, head = null;
+    for (;;) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      if (!head) head = value.slice(0, 2);
+      got += value.length;
+      setState("Sprachmodell wird heruntergeladen … " + (got / 1e6).toFixed(0) + (total ? " von " + (total / 1e6).toFixed(0) : "") + " MB");
+    }
+    console.log("model.tar.gz:", got, "Bytes, Content-Encoding:", enc, "erste Bytes:", head && [...head]);
+    if (!head || head[0] !== 0x1f || head[1] !== 0x8b)
+      throw new Error("model.tar.gz ist kein gz-Archiv (erste Bytes: " + (head ? [...head].map(b => b.toString(16)).join(" ") : "keine") + (enc ? ", Content-Encoding: " + enc : "") + ")");
+    if (got < 20e6) throw new Error("model.tar.gz ist zu klein (" + (got / 1e6).toFixed(1) + " MB)");
+  }
+
   async function start() {
     btn.disabled = true;
     try {
       setState("Sprachmodell wird geladen (beim ersten Mal ca. 46 MB) …");
       if (!model) {
-        const h = await fetch("model.tar.gz", { method: "HEAD" });
-        if (!h.ok) throw new Error("model.tar.gz nicht gefunden (Status " + h.status + ")");
+        await checkModelFile();
         const t0 = Date.now();
-        const tick = setInterval(() => setState("Sprachmodell wird geladen … " + Math.round((Date.now() - t0) / 1000) + " s"), 1000);
+        const tick = setInterval(() => setState("Sprachmodell wird entpackt und geladen … " + Math.round((Date.now() - t0) / 1000) + " s (kann einige Minuten dauern)"), 1000);
         try {
           model = await Promise.race([
             Vosk.createModel("model.tar.gz"),
@@ -74,7 +93,9 @@
       btn.textContent = "Mikrofon ausschalten"; setState(IDLE);
     } catch (e) {
       stop();
-      setState("Fehler: " + (e && e.message ? e.message : "Sprachmodell oder Mikrofon nicht verfügbar") + ". Prüfe, ob model.tar.gz hochgeladen ist und das Mikrofon erlaubt wurde.");
+      console.error(e);
+      if (e && e.name === "NotAllowedError") setState("Mikrofon nicht erlaubt. Erlaube es in den Browser-Einstellungen für diese Seite und schalte es neu ein.");
+      else setState("Fehler: " + (e && e.message ? e.message : "Sprachmodell oder Mikrofon nicht verfügbar"));
     }
     btn.disabled = false;
   }
