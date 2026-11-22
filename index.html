@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="de"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Mira</title>
+<style>
+:root{--bg:#e9eff2;--card:#fff;--text:#13232b;--muted:#5d6f78;--acc:#1d5f8c;--on:#fff;--line:#d3dde2;--me:#dbe9f2;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#10181c;--card:#1b262c;--text:#e6eef2;--muted:#93a6af;--acc:#6db3e0;--on:#0b1a22;--line:#2d3b42;--me:#24404f}}
+:root[data-theme="dark"]{--bg:#10181c;--card:#1b262c;--text:#e6eef2;--muted:#93a6af;--acc:#6db3e0;--on:#0b1a22;--line:#2d3b42;--me:#24404f}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--text);font:20px/1.4 system-ui,"Segoe UI",Roboto,sans-serif}
+.app{height:100%;display:grid;grid-template-columns:1fr 1fr;gap:16px;padding:16px}
+.side{display:flex;flex-direction:column;gap:16px;overflow:auto;min-height:0}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px}
+h2{margin:0 0 10px;font-size:22px}
+.muted{color:var(--muted);margin:4px 0}
+.row{display:flex;align-items:center;gap:12px;padding:10px 0;border-top:1px solid var(--line)}
+.row:first-of-type{border-top:0}
+.row input{width:26px;height:26px}
+.done span{text-decoration:line-through;color:var(--muted)}
+button{font:inherit;border:0;border-radius:10px;padding:12px 18px;background:var(--acc);color:var(--on);cursor:pointer}
+button.x{background:transparent;color:var(--muted);padding:6px 12px;font-size:26px}
+button.alt{background:transparent;color:var(--acc);border:1px solid var(--acc)}
+.bar{display:flex;gap:10px;margin-top:12px;flex-wrap:wrap}
+.chat{display:flex;flex-direction:column;min-height:0}
+#log{flex:1;overflow:auto;display:flex;flex-direction:column;gap:10px;padding-bottom:8px}
+.b{max-width:85%;padding:10px 14px;border-radius:14px;background:var(--bg);white-space:pre-wrap}
+.b.me{align-self:flex-end;background:var(--me)}
+.b a{color:var(--acc)}
+.in{display:flex;gap:10px;margin-top:8px}
+#q{flex:1;font:inherit;padding:14px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--text)}
+:focus-visible{outline:3px solid var(--acc);outline-offset:2px}
+.head{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:8px}
+.head h2{margin:0}.head button{margin-left:auto}
+.dot{width:14px;height:14px;border-radius:50%;background:var(--muted)}
+.dot.on{background:#d93a3a}
+@media(max-width:800px){.app{grid-template-columns:1fr;height:auto}.chat{height:70vh}}
+</style></head>
+<body>
+<div class="app">
+ <div class="side">
+  <div class="card"><h2>Einkaufsliste</h2><div id="list"></div>
+   <div class="bar"><button id="send">Ans Handy senden</button><button class="alt" id="clean">Erledigte entfernen</button></div></div>
+  <div class="card"><h2>Termine</h2><div id="ev"></div></div>
+ </div>
+ <div class="card chat">
+  <div class="head"><h2>Mira</h2><span class="dot" id="dot"></span><span class="muted" id="state">Mikrofon aus</span><button id="mic">Mikrofon einschalten</button></div>
+  <div id="log"></div>
+  <p class="muted" id="heard"></p>
+  <label class="muted"><input type="checkbox" id="showheard" checked> Erkanntes kurz anzeigen (nur zum Testen, wird nicht gespeichert)</label>
+  <div class="in"><input id="q" type="text" autocomplete="off" autocapitalize="off" placeholder="Schreiben oder per Mikrofon der Celia-Tastatur sprechen"><button id="go">Senden</button></div>
+  <label class="muted"><input type="checkbox" id="auto" checked> Nach einer Sprechpause automatisch senden. Oder am Ende „senden“ sagen.</label>
+ </div>
+</div>
+<script>
+const $=s=>document.querySelector(s);
+const load=(k,d)=>{try{return JSON.parse(localStorage.getItem(k))||d}catch(e){return d}};
+const store=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}};
+let items=load("mira.items",[]),events=load("mira.events",[]);
+const pad=n=>String(n).padStart(2,"0");
+const iso=d=>d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate());
+const wd=["So","Mo","Di","Mi","Do","Fr","Sa"];
+const days=["sonntag","montag","dienstag","mittwoch","donnerstag","freitag","samstag"];
+const cap=s=>s?s[0].toUpperCase()+s.slice(1):s;
+function el(t,c,x){const e=document.createElement(t);if(c)e.className=c;if(x!=null)e.textContent=x;return e}
+
+function persist(){store("mira.items",items);store("mira.events",events);render()}
+function render(){
+ const u=$("#list");u.replaceChildren();
+ if(!items.length)u.append(el("p","muted","Die Liste ist leer. Sag zum Beispiel: Milch und Brot auf die Einkaufsliste."));
+ items.forEach((it,i)=>{const r=el("div","row"+(it.done?" done":""));
+  const c=el("input");c.type="checkbox";c.checked=it.done;c.onchange=()=>{it.done=c.checked;persist()};
+  const s=el("span","",it.t);s.style.flex=1;
+  const x=el("button","x","×");x.onclick=()=>{items.splice(i,1);persist()};
+  r.append(c,s,x);u.append(r)});
+ const e=$("#ev");e.replaceChildren();
+ const up=upcoming();
+ if(!up.length)e.append(el("p","muted","Keine Termine. Sag zum Beispiel: Termin morgen um 10 Uhr Zahnarzt."));
+ up.forEach(v=>{const r=el("div","row");const s=el("span","",label(v)+"  "+v.t);s.style.flex=1;
+  const x=el("button","x","×");x.onclick=()=>{events.splice(events.indexOf(v),1);persist()};r.append(s,x);e.append(r)});
+}
+function upcoming(){const t=iso(new Date());return events.filter(v=>v.d>=t).sort((a,b)=>(a.d+a.h).localeCompare(b.d+b.h))}
+function label(v){const d=new Date(v.d+"T00:00");return wd[d.getDay()]+" "+pad(d.getDate())+"."+pad(d.getMonth()+1)+"."+(v.h?" um "+v.h+" Uhr":"")}
+
+function say(t,link,me,lab){const b=el("div","b"+(me?" me":""),t);
+ if(link){b.append(document.createElement("br"));const a=el("a","",lab||"Suche öffnen");a.href=link;a.target="_blank";a.rel="noopener";b.append(a)}
+ $("#log").append(b);$("#log").scrollTop=1e9}
+
+function when(s){
+ let d=null,h="";const t0=new Date();t0.setHours(0,0,0,0);
+ const add=n=>{const x=new Date(t0);x.setDate(x.getDate()+n);return x};
+ s=s.replace(/übermorgen/,()=>(d=add(2),""));
+ s=s.replace(/morgen/,()=>(d=add(1),""));
+ s=s.replace(/heute/,()=>(d=add(0),""));
+ s=s.replace(/(?:nächsten |am )?(montag|dienstag|mittwoch|donnerstag|freitag|samstag|sonntag)/,(_,w)=>{d=add((days.indexOf(w)-t0.getDay()+7)%7||7);return ""});
+ s=s.replace(/(?:am )?(\d{1,2})\.(\d{1,2})\.?(\d{4})?/,(_,a,b,c)=>{d=new Date(c?+c:t0.getFullYear(),b-1,a);return ""});
+ s=s.replace(/(?:um )?(\d{1,2})(?::(\d{2}))?\s*uhr(?:\s*(\d{2}))?/,(_,a,b,c)=>{h=pad(a)+":"+(b||c||"00");return ""});
+ return{d:d?iso(d):null,h,rest:s.replace(/\b(am|um|den|für|ein|einen|bitte)\b/g," ").replace(/\s+/g," ").trim()};
+}
+
+function addItems(txt){
+ const p=txt.split(/\s*(?:,|\bund\b)\s*/).map(s=>s.trim()).filter(Boolean);
+ if(!p.length)return say("Was soll auf die Liste?");
+ p.forEach(x=>items.push({t:cap(x),done:false}));persist();
+ say(p.join(", ")+(p.length>1?" stehen":" steht")+" jetzt auf der Liste.");
+}
+function listText(){const o=items.filter(i=>!i.done);return o.length?"Einkaufsliste:\n"+o.map(i=>"• "+i.t).join("\n"):""}
+async function sendList(){
+ const t=listText();if(!t)return say("Die Liste ist leer, es gibt nichts zu senden.");
+ try{if(navigator.share){await navigator.share({text:t});return say("Liste ist bereit zum Senden.")}}catch(e){if(e.name==="AbortError")return}
+ try{navigator.clipboard.writeText(t)}catch(e){}
+ window.open("https://wa.me/?text="+encodeURIComponent(t),"_blank","noopener");
+ say("Ich habe WhatsApp geöffnet. Wähle dort dein Handy oder dich selbst aus. Der Text liegt außerdem in der Zwischenablage.");
+}
+
+const WB="https://de.wikibooks.org/w/api.php?format=json&origin=*&";
+async function jget(u){const r=await fetch(u);if(!r.ok)throw 0;return r.json()}
+function htmlToText(h){
+ const d=new DOMParser().parseFromString(h,"text/html");
+ d.querySelectorAll("style,script,.mw-editsection,.toc,#toc,.noprint,sup.reference,.navbox,.mw-empty-elt,img").forEach(n=>n.remove());
+ const o=[];
+ d.body.querySelectorAll("h2,h3,h4,p,li,tr").forEach(n=>{
+  if(n.matches("p,li")&&n.parentElement.closest("li,td,th"))return;
+  const t=n.matches("tr")?[...n.children].map(c=>c.textContent.replace(/\s+/g," ").trim()).filter(Boolean).join(" "):n.textContent.replace(/\s+/g," ").trim();
+  if(!t)return;
+  o.push(n.matches("h2,h3,h4")?"\n"+t:n.matches("li")?"• "+t:t);
+ });
+ return o.join("\n").trim();
+}
+function fallbackSearch(t){
+ const u="https://duckduckgo.com/?kl=de-de&q="+encodeURIComponent(t);
+ say("Dazu habe ich keine direkte Antwort. Hier ist die Websuche, bestellt wird nichts:",u);
+ try{window.open(u,"_blank","noopener")}catch(e){}
+}
+const short=h=>h.replace(/^Kochbuch\/\s*/,"");
+async function recipe(t){
+ say("Ich suche ein Rezept für „"+t+"“ …");
+ try{
+  const s=await jget(WB+"action=query&list=search&srnamespace=0&srlimit=8&srsearch="+encodeURIComponent("Kochbuch "+t));
+  const hits=(s.query.search||[]).map(x=>x.title).filter(x=>/^Kochbuch\//.test(x));
+  if(!hits.length)throw 0;
+  const first=t.split(" ")[0];
+  const pick=hits.find(h=>h.toLowerCase().includes(first))||hits[0];
+  const p=await jget(WB+"action=parse&prop=text&redirects=1&disableeditsection=1&page="+encodeURIComponent(pick));
+  let x=htmlToText(p.parse.text["*"]);if(x.length>4000)x=x.slice(0,4000)+" …";
+  const more=hits.filter(h=>h!==pick).slice(0,3).map(short);
+  say(short(pick)+"\n\n"+x+"\n\nQuelle: Wikibooks Kochbuch (CC BY-SA)"+(more.length?"\nWeitere Treffer: "+more.join(", ")+". Sag zum Beispiel: Rezept "+more[0]:""),
+   "https://de.wikibooks.org/wiki/"+encodeURI(pick.replace(/ /g,"_")),false,"Rezept auf Wikibooks öffnen");
+ }catch(e){fallbackSearch(t+" Rezept")}
+}
+async function lookup(t){
+ try{
+  const d=await jget("https://de.wikipedia.org/w/api.php?format=json&origin=*&action=query&generator=search&gsrlimit=1&prop=extracts&exintro=1&explaintext=1&exlimit=1&gsrsearch="+encodeURIComponent(t));
+  const pg=Object.values(d.query.pages)[0];
+  if(!pg||!pg.extract)throw 0;
+  say(pg.title+"\n\n"+pg.extract.slice(0,1500)+(pg.extract.length>1500?" …":"")+"\n\nQuelle: Wikipedia (CC BY-SA)",
+   "https://de.wikipedia.org/wiki/"+encodeURI(pg.title.replace(/ /g,"_")),false,"Ganzen Artikel öffnen");
+ }catch(e){fallbackSearch(t)}
+}
+function handle(raw){
+ const q=raw.trim().toLowerCase().replace(/[.!?]+$/,"");let m;
+ if(!q)return;
+ if(/bestell|bezahl/.test(q)||(/\bkauf/.test(q)&&!/liste/.test(q)))
+  return say("Bestellen, Kaufen und Bezahlen kann ich nicht und werde es nie können. Ich kann dir aber etwas auf die Einkaufsliste setzen oder für dich suchen.");
+ if(/(sende|senden|schicke|schick|schicken|teile).*(handy|liste)|(liste|einkaufsliste).*handy/.test(q))return sendList();
+ if(/(leere|lösche|lösch)\s+(die\s+)?(einkaufs)?liste|liste leeren/.test(q)){items=[];persist();return say("Die Liste ist jetzt leer.")}
+ if(/^(zeige|zeig|lies|was steht|was ist).*liste|^(einkaufs)?liste( anzeigen)?$/.test(q))
+  return say(listText()||"Die Liste ist leer.");
+ if(/(lösche|lösch|streiche|streich|entferne|storniere).*termin/.test(q)){
+  const k=q.replace(/\b(lösche|lösch|streiche|streich|entferne|storniere|den|das|termin|am|um|bitte)\b/g,"").trim();
+  const i=k?events.findIndex(v=>v.t.toLowerCase().includes(k)):-1;
+  if(i<0)return say("Welchen Termin meinst du? Du kannst ihn auch rechts mit × löschen.");
+  const v=events.splice(i,1)[0];persist();return say("Termin „"+v.t+"“ ist gelöscht.");
+ }
+ if(m=q.match(/^(?:streiche|streich|lösche|lösch|entferne|nimm)\s+(.+?)(?:\s+(?:von|aus|auf)\s+(?:der|die|meiner)\s+(?:einkaufs)?liste)?$/)){
+  const k=m[1].replace(/^(die|den|das|der)\s+/,"");
+  const i=items.findIndex(x=>x.t.toLowerCase().includes(k));
+  if(i<0)return say("„"+cap(k)+"“ steht nicht auf der Liste.");
+  items.splice(i,1);persist();return say("„"+cap(k)+"“ ist von der Liste gestrichen.");
+ }
+ if(/termin|kalender|was steht an/.test(q)){
+  const w=when(q);
+  if(w.d){
+   const t=cap(w.rest.replace(/\b(neuer|neuen|termin|trage|trag|eintragen|ein|erinnere mich|ich habe|habe|mit|an|im|kalender)\b/g," ").replace(/\s+/g," ").trim())||"Termin";
+   events.push({d:w.d,h:w.h,t});persist();return say("Eingetragen: "+t+", "+label({d:w.d,h:w.h})+".");
+  }
+  if(/neu|trag|eintrag/.test(q))return say("Für welchen Tag? Zum Beispiel: Termin morgen um 10 Uhr Zahnarzt.");
+  const up=upcoming();return say(up.length?up.map(v=>label(v)+": "+v.t).join("\n"):"Es stehen keine Termine an.");
+ }
+ if(m=q.match(/^(.*?)\s*(?:auf|zu|zur|in|an)\s+(?:die|der|meine|unsere)?\s*(?:einkaufs)?liste\s*(?:setzen|schreiben|packen|hinzufügen|machen)?$/))
+  return addItems(m[1].replace(/^(setze|setz|schreibe|schreib|füge|füg|pack|packe|tue|tu|notiere|ich brauche|ich brauch|bitte)\s+/,"").replace(/\s+hinzu$/,""));
+ if(m=q.match(/^(?:ich brauche|ich brauch|wir brauchen|wir brauchen noch|ich muss noch)\s+(.+)$/))return addItems(m[1]);
+ if(/rezept|koche|kochen/.test(q)){
+  const t=q.replace(/\b(suche|such|zeige|zeig|mir|ein|eine|einen|das|nach|für|rezept|rezepte|wie|koche|kochen|ich|kann|man|zum|von|bitte)\b/g," ").replace(/\s+/g," ").trim();
+  return recipe(t||q);
+ }
+ if(m=q.match(/^(?:suche|such|recherchiere|google|finde)\s+(?:nach\s+)?(.+)$/)||q.match(/^((?:was|wer|wie|wo|wann|warum)\b.+)$/))return lookup(m[1]);
+ say("Das habe ich nicht verstanden. Du kannst zum Beispiel sagen:\n• Milch und Brot auf die Einkaufsliste\n• Streiche Milch von der Liste\n• Sende die Liste ans Handy\n• Termin morgen um 10 Uhr Zahnarzt\n• Welche Termine habe ich\n• Suche Rezept Kürbissuppe");
+}
+function submit(){clearTimeout(tm);const v=$("#q").value;if(!v.trim())return;say(v,null,true);$("#q").value="";handle(v);$("#q").focus()}
+$("#go").onclick=submit;
+let tm;
+$("#q").addEventListener("keydown",e=>{if(e.key==="Enter")submit()});
+$("#q").addEventListener("input",()=>{
+ clearTimeout(tm);const i=$("#q"),k=/(^|\s)(senden|absenden|abschicken)[.!?,]*\s*$/i;
+ if(k.test(i.value)){
+  i.value=i.value.replace(k,"").trim();
+  if(/^(die\s+)?(einkaufs)?liste$/i.test(i.value))i.value="sende die liste";
+  if(i.value)submit();return;
+ }
+ if($("#auto").checked&&i.value.trim())tm=setTimeout(submit,2500);
+});
+$("#send").onclick=sendList;
+$("#clean").onclick=()=>{items=items.filter(i=>!i.done);persist()};
+render();
+say("Hallo, ich bin Mira. Ich führe deine Einkaufsliste und deine Termine und suche für dich im Internet. Bestellen oder Kaufen mache ich nicht.\nSag zum Beispiel: Milch und Brot auf die Einkaufsliste.");
+</script>
+<script src="vosk.js"></script>
+<script src="wake.js"></script>
+</body></html>
